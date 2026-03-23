@@ -6,13 +6,20 @@
 
 ## Overview
 
-**SmartFan-IoT-Control** is an IoT-based system that enables remote monitoring and control of a ceiling fan using the **ESP8266 NodeMCU microcontroller**, the **ThingSpeak IoT cloud platform**, and **MATLAB analytics**.
+**SmartFan-IoT-Control** is an IoT-based simulation system that enables remote monitoring and control of a ceiling fan using the **ESP8266 NodeMCU microcontroller**, the **ThingSpeak IoT cloud platform**, and **MATLAB analytics**.
 
-The system demonstrates how household appliances can be integrated into a smart home ecosystem using **cloud APIs, wireless communication, and automation logic**.
+⚠️ **Important Note:**  
+This project is a **simulation-focused implementation**:
+- No actual ceiling fan or high-voltage AC hardware is used  
+- Fan speed states are **emulated using ESP8266 GPIO outputs** (LEDs / virtual signals)
 
-Users can control the fan speed remotely through a web interface, while the device communicates with the cloud to synchronize commands and feedback in real time.
+The system demonstrates:
+- IoT communication (ESP8266 ↔ Cloud)
+- Cloud-based command handling (ThingSpeak TalkBack)
+- Real-time control and feedback systems
+- MATLAB-based visualization and analytics
 
-This project was developed as part of the **EE427 Computer Networks mini project at NITK Surathkal** and focuses on IoT networking, cloud integration, and smart device control.
+This project was developed as part of the **EE427 Computer Networks mini project at NITK Surathkal**.
 
 ---
 
@@ -29,7 +36,7 @@ This project was developed as part of the **EE427 Computer Networks mini project
 - 📊 Data analytics using MATLAB
 - 🔁 Closed-loop feedback system
 - 🎛 Web-based user interface
-- 🤖 Optional AI-based smart speed optimization
+- 🧪 Fully simulation-friendly (no high-voltage hardware required)
 
 ---
 
@@ -40,26 +47,21 @@ User Interface (Web / MATLAB App)
            │
            ▼
      ThingSpeak Cloud
-  (Channel + TalkBack API)
            │
            ▼
      ESP8266 NodeMCU
            │
            ▼
-      Relay Module
-           │
-           ▼
-      Ceiling Fan
+   Simulated Output (GPIO / LEDs)
 ```
 
-The system operates using the following workflow:
+### Workflow
 
-1. The user sends a command through the web interface.
-2. The command is written to a ThingSpeak channel.
-3. The ESP8266 polls the channel or TalkBack queue.
-4. The NodeMCU activates the appropriate relay.
-5. The fan speed changes accordingly.
-6. The system sends feedback to the cloud to confirm execution.
+1. User sends command via web interface / MATLAB
+2. Command is written to ThingSpeak
+3. ESP8266 reads command (HTTP/MQTT)
+4. GPIO pins are updated to represent fan state
+5. Status is sent back to ThingSpeak
 
 ---
 
@@ -68,11 +70,8 @@ The system operates using the following workflow:
 ## Hardware
 
 - ESP8266 NodeMCU
-- 4-Channel Relay Module
-- Ceiling Fan (AC Motor)
-- Capacitors for Speed Control
-- 5V Power Supply
-- Optional: DHT22 Temperature Sensor
+- LEDs (optional for visualization)
+- Breadboard & wires
 
 ## Software
 
@@ -97,21 +96,23 @@ The system operates using the following workflow:
 | Component | Description |
 |-----------|-------------|
 | ESP8266 NodeMCU | Wi-Fi enabled microcontroller |
-| Relay Module | Switches AC power to control fan speed |
-| Capacitors | Used for AC fan speed regulation |
-| Power Supply | Provides regulated 5V DC |
+| LEDs (optional) | Represent fan speed states |
 | Breadboard & Wires | Prototyping |
 
-## Relay Logic
+⚠️ No relay modules, capacitors, or real AC fan are used.
 
-| Speed | Relay Configuration |
-|------|--------------------|
-| OFF | All relays OFF |
-| LOW | Relay 1 active |
-| MEDIUM | Relay 2 active |
-| HIGH | Relay 3 active |
+---
 
-Only **one relay is activated at a time** to prevent short circuits.
+## State Representation
+
+| Fan State | GPIO Output |
+|----------|------------|
+| OFF | All pins LOW |
+| LOW | GPIO D1 HIGH |
+| MEDIUM | GPIO D2 HIGH |
+| HIGH | GPIO D3 HIGH |
+
+These outputs simulate fan speeds and can be visualized using LEDs or Serial Monitor.
 
 ---
 
@@ -123,9 +124,9 @@ The system uses a **ThingSpeak channel** with multiple fields:
 |------|--------|
 | Field 1 | Fan Control Command |
 | Field 2 | Fan Status Feedback |
-| Field 3 | Energy Consumption |
+| Field 3 | Energy (simulated) |
 
-This allows the system to maintain a **closed-loop IoT architecture**, where the cloud reflects the actual device state.
+This enables a **closed-loop IoT system** where the cloud reflects the actual device state.
 
 ---
 
@@ -136,9 +137,9 @@ This allows the system to maintain a **closed-loop IoT architecture**, where the
 - Configure API keys
 - Install Arduino libraries
 
-## Phase 2 — Hardware Prototyping
-- Connect NodeMCU to relay module
-- Test relay switching logic
+## Phase 2 — Simulation Setup
+- Configure GPIO outputs
+- Test using LEDs or Serial Monitor
 
 ## Phase 3 — Network Integration
 - Connect ESP8266 to WiFi
@@ -146,15 +147,15 @@ This allows the system to maintain a **closed-loop IoT architecture**, where the
 
 ## Phase 4 — MATLAB Interface
 - Build GUI using MATLAB App Designer
-- Visualize fan usage statistics
+- Visualize system data
 
-## Phase 5 — Simulation
-- Simulate ESP8266 + relays using **Wokwi or Proteus**
+## Phase 5 — Simulation / Emulation
+- Use **Wokwi ESP8266 simulator** (recommended)
+- Validate cloud communication
 
 ## Phase 6 — Testing
-- Measure command latency
-- Analyze network packets
-- Validate system performance
+- Measure latency
+- Verify command-response cycle
 
 ---
 
@@ -171,8 +172,6 @@ cd SmartFan-IoT-Control
 
 ## 2. Install Arduino Libraries
 
-Install the following libraries in **Arduino IDE**:
-
 - ESP8266WiFi
 - ThingSpeak
 - PubSubClient
@@ -180,8 +179,6 @@ Install the following libraries in **Arduino IDE**:
 ---
 
 ## 3. Configure WiFi Credentials
-
-Update the firmware:
 
 ```cpp
 const char* ssid = "YOUR_WIFI_NAME";
@@ -202,7 +199,7 @@ const char* readAPIKey = "YOUR_READ_API_KEY";
 
 ## 5. Upload Firmware
 
-Upload the firmware to the **NodeMCU using Arduino IDE**.
+Upload the code to the ESP8266 using Arduino IDE.
 
 ---
 
@@ -211,59 +208,52 @@ Upload the firmware to the **NodeMCU using Arduino IDE**.
 MATLAB is used for:
 
 - Data visualization
-- Energy usage analysis
-- Smart automation logic
+- Usage analysis
+- Control interface (optional)
 
-Example MATLAB functions used:
+Example functions:
 
 ```
 thingSpeakRead()
 thingSpeakWrite()
 ```
 
-A **MATLAB App Designer interface** can provide:
+---
 
-- Speed controls
-- Live monitoring
-- Usage graphs
+# Simulation Mode
+
+This project is designed to run **without physical hardware dependencies**.
+
+You can test using:
+
+- 🔹 Serial Monitor output
+- 🔹 LEDs on GPIO pins
+- 🔹 Wokwi ESP8266 Simulator
+
+### Advantages
+
+- Safe (no high voltage)
+- Easy to demo
+- Fully portable
+- Faster development
 
 ---
 
 # Security Considerations
 
-- Use HTTPS connections for ThingSpeak communication
-- Separate Read and Write API keys
-- Use secure MQTT connections when available
-- Ensure relay modules include opto-isolation
-
----
-
-# Simulation
-
-The project can also run entirely in **simulation mode** using:
-
-- Wokwi ESP8266 simulator
-- Proteus IoT simulation
-
-This allows testing of:
-
-- Cloud communication
-- Relay switching logic
-- Network packets
-
-without using physical hardware.
+- Use HTTPS for ThingSpeak communication
+- Keep API keys private
+- Use secure MQTT if enabled
 
 ---
 
 # Future Improvements
 
-Possible extensions include:
-
-- 🌡 Temperature-based automatic fan speed
-- 🧠 Reinforcement learning optimization
-- 🗣 Voice control via Google Assistant
-- ⚡ Energy consumption prediction
-- 📱 Mobile application interface
+- 🌡 Temperature-based auto control
+- 🧠 AI-based optimization
+- 🗣 Voice control (Google Assistant + IFTTT)
+- 📱 Mobile app interface
+- 📊 Advanced analytics dashboard
 
 ---
 
