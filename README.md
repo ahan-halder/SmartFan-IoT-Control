@@ -1,23 +1,23 @@
 # SmartFan-IoT-Control
 
-> Internet-based IoT simulation for controlling a ceiling fan with four speed states (**OFF, LOW, MEDIUM, HIGH**) via a web interface.
+> Internet-based IoT simulation for controlling a ceiling fan with four speed states (**OFF, LOW, MEDIUM, HIGH**) via a web interface and cloud integration.
 
 ---
 
 ## Overview
 
-**SmartFan-IoT-Control** is an IoT-based simulation system that enables remote monitoring and control of a ceiling fan using the **ESP8266 NodeMCU microcontroller**, the **ThingSpeak IoT cloud platform**, and **MATLAB analytics**.
+**SmartFan-IoT-Control** is an IoT-based simulation system that enables remote monitoring and control of a ceiling fan using an **ESP32 WROOM** microcontroller, **ThingSpeak**, and **SinricPro**.
 
 ⚠️ **Important Note:**  
 This project is a **simulation-focused implementation**:
-- No actual ceiling fan or high-voltage AC hardware is used  
-- Fan speed states are **emulated using ESP8266 GPIO outputs** (LEDs / virtual signals)
+- No actual ceiling fan or high-voltage AC hardware is used
+- Fan speed states are emulated using **ESP32 GPIO outputs** and LEDs
 
 The system demonstrates:
-- IoT communication (ESP8266 ↔ Cloud)
-- Cloud-based command handling (ThingSpeak TalkBack)
-- Real-time control and feedback systems
-- MATLAB-based visualization and analytics
+- IoT communication (ESP32 ↔ Cloud)
+- Web-based fan control
+- Cloud-based state synchronization
+- Real-time feedback using LEDs and Serial Monitor
 
 This project was developed as part of the **EE427 Computer Networks mini project at NITK Surathkal**.
 
@@ -25,31 +25,27 @@ This project was developed as part of the **EE427 Computer Networks mini project
 
 # Features
 
-- 🌐 Remote fan control via internet
+- 🌐 Remote fan control via local web dashboard
 - ⚡ Four fan speed states
   - OFF
   - LOW
   - MEDIUM
   - HIGH
-- 📡 Wi-Fi communication using ESP8266
+- 📡 Wi-Fi communication using ESP32
 - ☁️ Cloud integration with ThingSpeak
-- 📊 Data analytics using MATLAB
-- 🔁 Closed-loop feedback system
+- 🏠 Smart home control using SinricPro
 - 🎛 Web-based user interface
-- 🧪 Fully simulation-friendly (no high-voltage hardware required)
+- 🧪 Fully simulation-friendly
 
 ---
 
 # System Architecture
 
 ```
-User Interface (Web / MATLAB App)
+User Interface (Web / SinricPro / ThingSpeak)
            │
            ▼
-     ThingSpeak Cloud
-           │
-           ▼
-     ESP8266 NodeMCU
+        ESP32 WROOM
            │
            ▼
    Simulated Output (GPIO / LEDs)
@@ -57,11 +53,11 @@ User Interface (Web / MATLAB App)
 
 ### Workflow
 
-1. User sends command via web interface / MATLAB
-2. Command is written to ThingSpeak
-3. ESP8266 reads command (HTTP/MQTT)
-4. GPIO pins are updated to represent fan state
-5. Status is sent back to ThingSpeak
+1. User sends command via web dashboard or SinricPro
+2. ESP32 updates fan state
+3. GPIO outputs are changed to represent fan speed
+4. State is logged to ThingSpeak
+5. LEDs provide visual feedback
 
 ---
 
@@ -69,23 +65,25 @@ User Interface (Web / MATLAB App)
 
 ## Hardware
 
-- ESP8266 NodeMCU
-- LEDs (optional for visualization)
-- Breadboard & wires
+- ESP32 WROOM
+- 3 LEDs
+- Breadboard
+- Jumper wires
+- Resistors (3.3 ohms)
 
 ## Software
 
 - Arduino IDE
 - ThingSpeak IoT Platform
-- MATLAB Analytics
-- ESP8266WiFi Library
-- ThingSpeak Arduino Library
-- PubSubClient (MQTT)
+- SinricPro
+- ESP32 WiFi Library
+- WebServer Library
+- HTTPClient Library
 
 ## Communication Protocols
 
 - HTTP REST API
-- MQTT Messaging Protocol
+- Cloud-based device control
 
 ---
 
@@ -95,11 +93,11 @@ User Interface (Web / MATLAB App)
 
 | Component | Description |
 |-----------|-------------|
-| ESP8266 NodeMCU | Wi-Fi enabled microcontroller |
-| LEDs (optional) | Represent fan speed states |
-| Breadboard & Wires | Prototyping |
-
-⚠️ No relay modules, capacitors, or real AC fan are used.
+| ESP32 WROOM | Wi-Fi enabled microcontroller |
+| 3 LEDs | Represent fan speed states |
+| Breadboard | Prototyping platform |
+| Jumper Wires | Circuit connections |
+| Resistors | Current limiting |
 
 ---
 
@@ -107,12 +105,12 @@ User Interface (Web / MATLAB App)
 
 | Fan State | GPIO Output |
 |----------|------------|
-| OFF | All pins LOW |
-| LOW | GPIO D1 HIGH |
-| MEDIUM | GPIO D2 HIGH |
-| HIGH | GPIO D3 HIGH |
+| OFF | All LEDs OFF |
+| LOW | Low-speed LED ON |
+| MEDIUM | Low + Medium LEDs ON |
+| HIGH | Low + Medium + High LEDs ON |
 
-These outputs simulate fan speeds and can be visualized using LEDs or Serial Monitor.
+The onboard power LED indicates whether the fan is ON or OFF.
 
 ---
 
@@ -122,40 +120,10 @@ The system uses a **ThingSpeak channel** with multiple fields:
 
 | Field | Purpose |
 |------|--------|
-| Field 1 | Fan Control Command |
-| Field 2 | Fan Status Feedback |
-| Field 3 | Energy (simulated) |
+| Field 1 | Fan speed value |
+| Field 2 | Fan state name |
 
-This enables a **closed-loop IoT system** where the cloud reflects the actual device state.
-
----
-
-# Project Workflow
-
-## Phase 1 — Environment Setup
-- Create ThingSpeak channel
-- Configure API keys
-- Install Arduino libraries
-
-## Phase 2 — Simulation Setup
-- Configure GPIO outputs
-- Test using LEDs or Serial Monitor
-
-## Phase 3 — Network Integration
-- Connect ESP8266 to WiFi
-- Implement ThingSpeak communication
-
-## Phase 4 — MATLAB Interface
-- Build GUI using MATLAB App Designer
-- Visualize system data
-
-## Phase 5 — Simulation / Emulation
-- Use **Wokwi ESP8266 simulator** (recommended)
-- Validate cloud communication
-
-## Phase 6 — Testing
-- Measure latency
-- Verify command-response cycle
+This allows logging and monitoring of the current fan state.
 
 ---
 
@@ -172,88 +140,67 @@ cd SmartFan-IoT-Control
 
 ## 2. Install Arduino Libraries
 
-- ESP8266WiFi
-- ThingSpeak
-- PubSubClient
+- WiFi
+- WebServer
+- HTTPClient
+- SinricPro
+- SinricProFanUS
 
 ---
 
 ## 3. Configure WiFi Credentials
 
 ```cpp
-const char* ssid = "YOUR_WIFI_NAME";
-const char* password = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID = "YOUR_WIFI_NAME";
+const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";
 ```
 
 ---
 
-## 4. Add ThingSpeak API Keys
+## 4. Add ThingSpeak and SinricPro Keys
 
 ```cpp
-unsigned long channelID = YOUR_CHANNEL_ID;
-const char* writeAPIKey = "YOUR_WRITE_API_KEY";
-const char* readAPIKey = "YOUR_READ_API_KEY";
+const char* TS_WRITE_API = "YOUR_WRITE_API_KEY";
+const unsigned long TS_CHANNEL_ID = YOUR_CHANNEL_ID;
+
+#define SINRIC_APP_KEY    "YOUR_APP_KEY"
+#define SINRIC_APP_SECRET "YOUR_APP_SECRET"
+#define FAN_DEVICE_ID     "YOUR_DEVICE_ID"
 ```
 
 ---
 
 ## 5. Upload Firmware
 
-Upload the code to the ESP8266 using Arduino IDE.
-
----
-
-# MATLAB Integration
-
-MATLAB is used for:
-
-- Data visualization
-- Usage analysis
-- Control interface (optional)
-
-Example functions:
-
-```
-thingSpeakRead()
-thingSpeakWrite()
-```
+Upload the code to the ESP32 using Arduino IDE.
 
 ---
 
 # Simulation Mode
 
-This project is designed to run **without physical hardware dependencies**.
+This project is designed to run **without physical fan hardware**.
 
 You can test using:
-
-- 🔹 Serial Monitor output
-- 🔹 LEDs on GPIO pins
-- 🔹 Wokwi ESP8266 Simulator
-
-### Advantages
-
-- Safe (no high voltage)
-- Easy to demo
-- Fully portable
-- Faster development
+- Serial Monitor output
+- LEDs on GPIO pins
+- Local browser-based dashboard
 
 ---
 
 # Security Considerations
 
-- Use HTTPS for ThingSpeak communication
 - Keep API keys private
-- Use secure MQTT if enabled
+- Avoid hardcoding production credentials
+- Use secure network access where possible
 
 ---
 
 # Future Improvements
 
-- 🌡 Temperature-based auto control
-- 🧠 AI-based optimization
-- 🗣 Voice control (Google Assistant + IFTTT)
+- 🌡 Automatic temperature-based control
 - 📱 Mobile app interface
 - 📊 Advanced analytics dashboard
+- 🗣 Voice assistant integration
 
 ---
 
