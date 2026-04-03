@@ -1,209 +1,185 @@
 # SmartFan-IoT-Control
 
-> Internet-based IoT simulation for controlling a ceiling fan with four speed states (**OFF, LOW, MEDIUM, HIGH**) via a web interface and cloud integration.
+> IoT-based ESP32 fan-speed simulation with local web control, SinricPro integration, and ThingSpeak logging.
 
 ---
 
 ## Overview
 
-**SmartFan-IoT-Control** is an IoT-based simulation system that enables remote monitoring and control of a ceiling fan using an **ESP32 WROOM** microcontroller, **ThingSpeak**, and **SinricPro**.
+**SmartFan-IoT-Control** is a simulation-first IoT mini project built using **ESP32 WROOM**.
 
-⚠️ **Important Note:**  
-This project is a **simulation-focused implementation**:
-- No actual ceiling fan or high-voltage AC hardware is used
-- Fan speed states are emulated using **ESP32 GPIO outputs** and LEDs
+It supports fan speed control with four states:
 
-The system demonstrates:
-- IoT communication (ESP32 ↔ Cloud)
-- Web-based fan control
-- Cloud-based state synchronization
-- Real-time feedback using LEDs and Serial Monitor
+- `0 = OFF`
+- `1 = LOW`
+- `2 = MEDIUM`
+- `3 = HIGH`
 
-This project was developed as part of the **EE427 Computer Networks mini project at NITK Surathkal**.
+⚠️ **Simulation Note**  
+This project does **not** switch real AC fan hardware.  
+Fan behavior is emulated using GPIO outputs and LEDs.
 
 ---
 
-# Features
+## What the current firmware (`main.ino`) actually does
 
-- 🌐 Remote fan control via local web dashboard
-- ⚡ Four fan speed states
-  - OFF
-  - LOW
-  - MEDIUM
-  - HIGH
-- 📡 Wi-Fi communication using ESP32
-- ☁️ Cloud integration with ThingSpeak
-- 🏠 Smart home control using SinricPro
-- 🎛 Web-based user interface
-- 🧪 Fully simulation-friendly
+### Control Inputs (active)
+
+1. **ESP32 local dashboard** (`WebServer` on ESP32)
+   - Route: `/set?speed=0..3`
+2. **SinricPro**
+   - Power callback (`onPowerState`)
+   - Range callback (`onRangeValue`)
+
+Both inputs call the same function: `applyFanSpeed()`.
+
+### Outputs (active)
+
+- GPIO LED state update (`updateLEDs()`)
+- Serial logs
+- ThingSpeak update (`pushThingSpeak()`), throttled to ~16 seconds
 
 ---
 
-# System Architecture
+## System Architecture (accurate to current code)
 
+```text
+                ┌──────────────────────┐
+                │  Browser (ESP32 UI)  │
+                │   GET /set?speed=n   │
+                └──────────┬───────────┘
+                           │
+                           ▼
+                    ┌──────────────┐
+                    │    ESP32     │
+                    │  main.ino    │
+                    └──────┬───────┘
+                           │
+        ┌──────────────────┼──────────────────┐
+        ▼                  ▼                  ▼
+  GPIO / LEDs        Serial Monitor      ThingSpeak (write)
+ (speed emulation)   (state logs)      field1, field2 updates
+                           ▲
+                           │
+                   ┌───────┴────────┐
+                   │   SinricPro    │
+                   │ (cloud control)│
+                   └────────────────┘
 ```
-User Interface (Web / SinricPro / ThingSpeak)
-           │
-           ▼
-        ESP32 WROOM
-           │
-           ▼
-   Simulated Output (GPIO / LEDs)
-```
-
-### Workflow
-
-1. User sends command via web dashboard or SinricPro
-2. ESP32 updates fan state
-3. GPIO outputs are changed to represent fan speed
-4. State is logged to ThingSpeak
-5. LEDs provide visual feedback
 
 ---
 
-# Technologies Used
+## About `index.html` in this repo
 
-## Hardware
+The standalone `index.html` is a **ThingSpeak-based UI** that:
+
+- **writes** command to `field3`
+- **reads** current speed from `field1`
+
+### Important compatibility note
+
+Current `main.ino` **does not read/poll `field3`**, so `index.html` commands will not change ESP32 speed unless firmware polling for `field3` is added.
+
+So currently:
+
+- `field1` and `field2` are actively written by ESP32 ✅
+- `field3` is used by `index.html` only (no firmware consumer) ⚠️
+
+---
+
+## ThingSpeak Field Mapping
+
+| Field | Used By | Direction | Purpose |
+|------|---------|-----------|---------|
+| Field 1 | `main.ino` | ESP32 → ThingSpeak | Numeric speed (`0..3`) |
+| Field 2 | `main.ino` | ESP32 → ThingSpeak | Speed label (`OFF/LOW/MEDIUM/HIGH`) |
+| Field 3 | `index.html` | UI → ThingSpeak | Command speed (`0..3`) |
+
+---
+
+## Hardware Setup
+
+### Components
 
 - ESP32 WROOM
-- 3 LEDs
-- Breadboard
-- Jumper wires
-- Resistors (3.3 ohms)
+- 3 external LEDs (`LOW`, `MEDIUM`, `HIGH`)
+- Onboard LED (`POWER` status indication)
+- Breadboard + jumper wires
+- Current-limiting resistors
 
-## Software
+### GPIO behavior
+
+- `POWER_LED` (GPIO 2): fan ON/OFF indication
+- `LED_LOW` (GPIO 18)
+- `LED_MED` (GPIO 19)
+- `LED_HIGH` (GPIO 21)
+
+State mapping:
+
+| Fan State | LED Output |
+|----------|------------|
+| OFF | All speed LEDs OFF |
+| LOW | LOW LED ON |
+| MEDIUM | LOW + MEDIUM ON |
+| HIGH | LOW + MEDIUM + HIGH ON |
+
+---
+
+## Technologies Used
+
+### Firmware
 
 - Arduino IDE
-- ThingSpeak IoT Platform
+- `WiFi.h`
+- `WebServer.h`
+- `HTTPClient.h`
+- `SinricPro.h`
+- `SinricProFanUS.h`
+
+### Cloud / UI
+
+- ThingSpeak
 - SinricPro
-- ESP32 WiFi Library
-- WebServer Library
-- HTTPClient Library
-
-## Communication Protocols
-
-- HTTP REST API
-- Cloud-based device control
+- Browser-based dashboard (ESP32-served + standalone `index.html`)
 
 ---
 
-# Hardware Setup
+## Installation (firmware path)
 
-## Components
-
-| Component | Description |
-|-----------|-------------|
-| ESP32 WROOM | Wi-Fi enabled microcontroller |
-| 3 LEDs | Represent fan speed states |
-| Breadboard | Prototyping platform |
-| Jumper Wires | Circuit connections |
-| Resistors | Current limiting |
-
----
-
-## State Representation
-
-| Fan State | GPIO Output |
-|----------|------------|
-| OFF | All LEDs OFF |
-| LOW | Low-speed LED ON |
-| MEDIUM | Low + Medium LEDs ON |
-| HIGH | Low + Medium + High LEDs ON |
-
-The onboard power LED indicates whether the fan is ON or OFF.
+1. Open `main.ino` in Arduino IDE.
+2. Install required libraries:
+   - WiFi
+   - WebServer
+   - HTTPClient
+   - SinricPro
+   - SinricProFanUS
+3. Configure credentials and keys in `main.ino`:
+   - Wi-Fi SSID/password
+   - ThingSpeak write API key and channel ID
+   - SinricPro app/device credentials
+4. Upload to ESP32.
+5. Open Serial Monitor and note ESP32 local IP.
+6. Open that IP in browser for local fan control UI.
 
 ---
 
-# ThingSpeak Channel Design
+## Current limitations
 
-The system uses a **ThingSpeak channel** with multiple fields:
-
-| Field | Purpose |
-|------|--------|
-| Field 1 | Fan speed value |
-| Field 2 | Fan state name |
-
-This allows logging and monitoring of the current fan state.
+- No real AC fan switching (simulation only)
+- ThingSpeak write rate throttled (~16 s)
+- Standalone `index.html` command path depends on firmware support for reading `field3` (not present in current `main.ino`)
 
 ---
 
-# Installation
+## Future Improvements
 
-## 1. Clone the repository
-
-```bash
-git clone https://github.com/yourusername/SmartFan-IoT-Control.git
-cd SmartFan-IoT-Control
-```
+- Add firmware polling of ThingSpeak `field3` for full cloud-command loop
+- Temperature-based automatic speed control
+- OTA update support
+- Stronger credential handling (secrets outside source)
 
 ---
 
-## 2. Install Arduino Libraries
+## License
 
-- WiFi
-- WebServer
-- HTTPClient
-- SinricPro
-- SinricProFanUS
-
----
-
-## 3. Configure WiFi Credentials
-
-```cpp
-const char* WIFI_SSID = "YOUR_WIFI_NAME";
-const char* WIFI_PASS = "YOUR_WIFI_PASSWORD";
-```
-
----
-
-## 4. Add ThingSpeak and SinricPro Keys
-
-```cpp
-const char* TS_WRITE_API = "YOUR_WRITE_API_KEY";
-const unsigned long TS_CHANNEL_ID = YOUR_CHANNEL_ID;
-
-#define SINRIC_APP_KEY    "YOUR_APP_KEY"
-#define SINRIC_APP_SECRET "YOUR_APP_SECRET"
-#define FAN_DEVICE_ID     "YOUR_DEVICE_ID"
-```
-
----
-
-## 5. Upload Firmware
-
-Upload the code to the ESP32 using Arduino IDE.
-
----
-
-# Simulation Mode
-
-This project is designed to run **without physical fan hardware**.
-
-You can test using:
-- Serial Monitor output
-- LEDs on GPIO pins
-- Local browser-based dashboard
-
----
-
-# Security Considerations
-
-- Keep API keys private
-- Avoid hardcoding production credentials
-- Use secure network access where possible
-
----
-
-# Future Improvements
-
-- 🌡 Automatic temperature-based control
-- 📱 Mobile app interface
-- 📊 Advanced analytics dashboard
-- 🗣 Voice assistant integration
-
----
-
-# License
-
-This project is released under the **MIT License**.
+MIT License
