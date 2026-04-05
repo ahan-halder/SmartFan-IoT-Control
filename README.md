@@ -36,16 +36,13 @@ It supports four fan states:
 > Update these paths if your image filenames are different.
 
 ### Dashboard
-![Dashboard](./images/dashboard.png)
+![Dashboard](./images/Thingspeak_dashboard.jpg)
 
 ### Hardware Setup
-![Hardware Setup](./images/hardware-setup.png)
-
-### ThingSpeak Output
-![ThingSpeak Output](./images/thingspeak-data.png)
+![Hardware Setup](./images/Side_view.jpg)
 
 ### Serial Monitor
-![Serial Monitor](./images/serial-output.png)
+![Serial Monitor](./images/Serial_output_local.jpg)
 
 ---
 
