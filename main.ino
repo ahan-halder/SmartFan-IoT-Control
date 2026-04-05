@@ -47,6 +47,48 @@ int           lastMirroredSpeed = -1;
 unsigned long lastPoll        = 0;
 int           lastCommandSeen = -1;
 
+// ── LED Startup sequence ────────────────────────────────────────
+void runLEDStartupTest() {
+  Serial.println();
+  Serial.println(F("  [ LED TEST ] Starting startup LED check..."));
+
+  // POWER LED (active LOW)
+  digitalWrite(POWER_LED, LOW);
+  delay(300);
+  digitalWrite(POWER_LED, HIGH);
+  delay(150);
+
+  // LOW LED
+  digitalWrite(LED_LOW, HIGH);
+  delay(300);
+  digitalWrite(LED_LOW, LOW);
+  delay(150);
+
+  // MED LED
+  digitalWrite(LED_MED, HIGH);
+  delay(300);
+  digitalWrite(LED_MED, LOW);
+  delay(150);
+
+  // HIGH LED
+  digitalWrite(LED_HIGH, HIGH);
+  delay(300);
+  digitalWrite(LED_HIGH, LOW);
+  delay(150);
+
+  Serial.println(F("  [ LED TEST ] All LEDs ON"));
+
+  digitalWrite(POWER_LED, LOW);   // active LOW
+  digitalWrite(LED_LOW, HIGH);
+  digitalWrite(LED_MED, HIGH);
+  digitalWrite(LED_HIGH, HIGH);
+
+  delay(700);
+
+  Serial.println(F("  [ LED TEST ] Completed."));
+  Serial.println();
+}
+
 // ── Serial Helpers ────────────────────────────────────────
 void printDivider() {
   Serial.println(F("  ----------------------------------------"));
@@ -317,6 +359,7 @@ void setup() {
   pinMode(LED_LOW,   OUTPUT);
   pinMode(LED_MED,   OUTPUT);
   pinMode(LED_HIGH,  OUTPUT);
+  runLEDStartupTest();
   updateLEDs();
   Serial.println(F("  LEDs       : Initialized"));
 
